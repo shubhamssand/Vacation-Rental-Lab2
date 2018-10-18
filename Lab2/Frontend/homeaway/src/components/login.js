@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Field, reduxForm } from "redux-form";
-import traveler_login from '../actions/actions.js';
+import traveler_login from '../actions/travelerActions.js';
 import { connect } from "react-redux";
 
 import { Link ,NavLink,Redirect} from 'react-router-dom';
@@ -182,6 +182,6 @@ class Login extends Component {
         
         export default reduxForm({
   validate,
-  form: "NewBookForm"
+  form: "NewTravelerForm"
 })(connect(mapStateToProps, {traveler_login })(Login));
 

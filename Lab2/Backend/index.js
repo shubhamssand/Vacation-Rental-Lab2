@@ -16,6 +16,8 @@ const bcrypt = require('bcrypt');
 var uuidv4 = require('uuid/v4');
 
 var maxSize=1000000*90;
+var {Traveler} = require('./models/traveler');
+var {mongoose} = require('./mongoose');
 
 
 const storage = multer.diskStorage({
@@ -104,9 +106,113 @@ app.post('/travelerlogin', function (req, res) {
     console.log(req.body.emailaddress);
 
     var password = req.body.password;
-    var sql = "SELECT *  FROM traveler_login_data WHERE emailaddress = " +
-        mysql.escape(emailaddress);
+    // var sql = "SELECT *  FROM traveler_login_data WHERE emailaddress = " +
+    //     mysql.escape(emailaddress);
 
+    // pool.getConnection(function (err, con) {
+    //     if (err) {
+    //         res.writeHead(400, {
+    //             'Content-Type': 'text/plain'
+    //         })
+    //         res.end("Could Not Get Connection Object");
+    //     } else {
+    //         con.query(sql, function (err, result) {
+    //             console.log("req is", JSON.stringify(req.body));
+    //             console.log(result);
+    //             if (err || result.length == 0) {
+    //                 res.writeHead(400, {
+    //                     'Content-Type': 'text/plain'
+    //                 })
+    //                 res.end("Incorrect emailaddress");
+    //             } else {
+    //                 let temp = JSON.stringify(result[0]);
+
+    //                 temp = JSON.parse(temp);
+
+    //                 let name = temp.firstname;
+    //                 let hash=temp.password;
+    //                 let username = temp.emailaddress;
+
+    //                 if(bcrypt.compareSync(password, hash)) {
+    //                     // Passwords match
+
+    //                     console.log(name);
+
+
+    //                 res.cookie('traveler', username, { maxAge: 9000000, httpOnly: false, path: '/' });
+    //                 console.log(res.cookie);
+    //                 req.session.user = username;
+    //                 console.log("Session",req.session.user);
+    //                 res.writeHead(200, {
+    //                     'Content-Type': 'text/plain'
+    //                 })
+
+    //                 res.end("Successful Login");
+    //                    } else {
+    //                     res.writeHead(400, {
+    //                         'Content-Type': 'text/plain'
+    //                     })
+    
+    //                     res.end("Login Unsuccessfull");
+    //                    }
+
+                    
+
+    //             }
+    //         });
+    //     }
+    // });
+
+
+    Traveler.findOne({ emailaddress: req.body.emailaddress })
+        .then((user) => {
+            console.log("user data from db",user );
+            if (user) {
+                if (bcrypt.compareSync(req.body.password, user.password)) {
+                    res.cookie('traveler', user.emailaddress, { maxAge: 9000000, httpOnly: false, path: '/' });
+                    console.log(res.cookie);
+                    req.session.user = user.emailaddress;
+                    console.log("Session", req.session.user);
+                    res.writeHead(200, {
+                        'Content-Type': 'text/plain'
+                    })
+
+                    res.end("Successful Login");
+
+                } else {
+                    {
+                        res.writeHead(400, {
+                            'Content-Type': 'text/plain'
+                        })
+
+                        res.end("Login Unsuccessfull");
+                    }
+                }
+            } else {
+                res.writeHead(400, {
+                    'Content-Type': 'text/plain'
+                })
+
+                res.end("Login Unsuccessfull");
+            }
+        })
+});
+
+
+//fetch properties for details view
+
+
+app.get('/fetchproperties', function (req, res) {
+    //console.log("in fetch");
+    //console.log(req.body);
+    //console.log(typeof(req.body.location));
+
+
+
+    var sql = "SELECT * FROM property_details WHERE accomodates >= " +
+        mysql.escape(req.query.guests) + " AND start <=" +
+        mysql.escape(req.query.start) + " AND end >=" +
+        mysql.escape(req.query.end) + "AND address LIKE " + mysql.escape("%" + req.query.location + "%"); //"'%San Carlos%'";
     pool.getConnection(function (err, con) {
         if (err) {
             res.writeHead(400, {
@@ -115,112 +221,41 @@ app.post('/travelerlogin', function (req, res) {
             res.end("Could Not Get Connection Object");
         } else {
             con.query(sql, function (err, result) {
-                console.log("req is", JSON.stringify(req.body));
-                console.log(result);
-                if (err || result.length == 0) {
+                console.log(sql);
+
+                if (err) {
                     res.writeHead(400, {
                         'Content-Type': 'text/plain'
                     })
-                    res.end("Incorrect emailaddress");
+                    res.end("Error while retrieving Book Details");
                 } else {
-                    let temp = JSON.stringify(result[0]);
+                    console.log("Properties", path.join(__dirname, '/properties'));
+                    let temp = JSON.stringify(result);
 
                     temp = JSON.parse(temp);
+                    console.log(temp);
+                    var imgs = [];
+                    //console.log("temp",temp);
+                    for (var i = 0; i < temp.length; i++) {
 
-                    let name = temp.firstname;
-                    let hash=temp.password;
-                    let username = temp.emailaddress;
-
-                    if(bcrypt.compareSync(password, hash)) {
-                        // Passwords match
-
-                        console.log(name);
-
-
-                    res.cookie('traveler', username, { maxAge: 9000000, httpOnly: false, path: '/' });
-                    console.log(res.cookie);
-                    req.session.user = username;
-                    console.log("Session",req.session.user);
+                        if (temp[i].images != "") {
+                            let propimg = temp[i].images.split('*');
+                            propimg.pop();
+                            let filN = propimg[0];
+                            imgs.push(propimg);
+                            temp[i].imageName = filN;
+                        }
+                    }
+                    console.log("d", temp);
                     res.writeHead(200, {
-                        'Content-Type': 'text/plain'
+                        'Content-Type': 'application/json'
                     })
-
-                    res.end("Successful Login");
-                       } else {
-                        res.writeHead(400, {
-                            'Content-Type': 'text/plain'
-                        })
-    
-                        res.end("Login Unsuccessfull");
-                       }
-
-                    
-
+                    res.end(JSON.stringify(temp));
                 }
             });
         }
-    });
 
-});
-
-
-//fetch properties for details view
-
-
-app.get('/fetchproperties', function(req,res){
-    //console.log("in fetch");
-    //console.log(req.body);
-    //console.log(typeof(req.body.location));
-
-    
-    
-    var sql = "SELECT * FROM property_details WHERE accomodates >= " +
-    mysql.escape(req.query.guests) + " AND start <="+
-    mysql.escape(req.query.start)+ " AND end >="+
-    mysql.escape(req.query.end)+"AND address LIKE "+ mysql.escape("%" + req.query.location + "%") ; //"'%San Carlos%'";
-    pool.getConnection(function (err, con) {
-        if (err) {
-            res.writeHead(400, {
-                'Content-Type': 'text/plain'
-            })
-            res.end("Could Not Get Connection Object");
-        } else {
-    con.query(sql,function(err,result){
-        console.log(sql);
-       
-        if(err){
-            res.writeHead(400,{
-                'Content-Type' : 'text/plain'
-            })
-            res.end("Error while retrieving Book Details");
-        }else{
-            console.log("Properties",path.join(__dirname,'/properties'));
-            let temp = JSON.stringify(result);
-
-            temp = JSON.parse(temp);
-            console.log(temp);
-            var imgs=[];
-            //console.log("temp",temp);
-            for(var i=0;i<temp.length;i++){
-                
-                if(temp[i].images!=""){
-                    let propimg=temp[i].images.split('*');
-                    propimg.pop();
-                    let filN=propimg[0];
-                    imgs.push(propimg);
-                    temp[i].imageName=filN;
-                }
-            }
-            console.log("d",temp);
-            res.writeHead(200,{
-                'Content-Type' : 'application/json'
-            })
-            res.end(JSON.stringify(temp));
-        }
-    });
-}
-    
-})
+    })
 })
 
 
@@ -913,15 +948,16 @@ app.post('/postproperty',uploadProperties.array('photos'),function (req, res) {
 //Traveler Sign Up
     app.post('/signup', function (req, res) {
         console.log("Inside Sign Up Request Handler");
+        console.log(req.body)
         var emailaddress = req.body.emailaddress;
-        console.log(req.body.firstname);
+        console.log(req.body.firstName);
         bcrypt.hash(req.body.password, 10, function(err, hash) {
             // Store hash in database
             
             var str = "select * from traveler_login_data where emailaddress= " + mysql.escape(emailaddress);
             var sql = "INSERT INTO traveler_login_data VALUES ( " +
                 mysql.escape(null) + " ," +
-                mysql.escape(req.body.firstname) + " , " + mysql.escape(req.body.lastname) + " , " +
+                mysql.escape(req.body.firstName) + " , " + mysql.escape(req.body.lastName) + " , " +
                 mysql.escape(req.body.emailaddress) + ", " + mysql.escape(hash) + " , " + mysql.escape("") + ", " + mysql.escape("") + ", " + mysql.escape("") + ", " + mysql.escape("") + ", " + mysql.escape("") + ", " + mysql.escape("") + ", " + mysql.escape("") + ", " + mysql.escape("") +") ";
     
             pool.getConnection(function (err, con) {

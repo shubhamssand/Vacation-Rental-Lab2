@@ -1,18 +1,45 @@
 import React, { Component } from 'react';
+import { Link,Redirect,NavLink } from 'react-router-dom';
 import { Field, reduxForm } from "redux-form";
-import traveler_login from '../actions/actions.js';
+import owner_login from '../actions/ownerActions.js';
 import { connect } from "react-redux";
 
-import { Link ,NavLink,Redirect} from 'react-router-dom';
 import Logo from '../../src/logo-bceheader.svg';
 import expedia from '../../src/birdhouse-bceheader.svg';
+import displayimg from '../../src/ownerlogin.png';
 import '../../src/CSS/homeaway.css';
-import axios from 'axios';
+import '../../src/CSS/ownerlogin.css';
 import '../../src/CSS/bootstrap-social.css';
+import axios from 'axios';
 
 
-class Login extends Component {
-    
+class OwnerLogin extends Component {
+    // constructor(props){
+    //     super(props);
+    //     this.state={
+    //         emailaddress:null,
+    //         password:null,
+    //         message:null,
+    //         status:null
+            
+    //     }
+    //     this.setemail=this.setemail.bind(this);
+    //     this.setpassword=this.setpassword.bind(this);
+    //     this.checklogin=this.checklogin.bind(this);
+    // }
+    // setemail(e){
+    //     this.setState({
+    //         emailaddress:e.target.value
+        
+    //     })
+    //     }
+        
+    //     setpassword(e){
+    //         this.setState({
+    //             password:e.target.value
+    //         })
+    //     }
+
 
     //Define component that you wanbt to render
   renderField(field) {
@@ -32,46 +59,46 @@ class Login extends Component {
   }
 
 
-    // checklogin(e){
-    //     e.preventDefault();
-    //     let data={
-    //         emailaddress:this.state.emailaddress,
-    //         password:this.state.password
-
-    //     }
-        //set the with credentials to true
-        // axios.defaults.withCredentials = true;
-        // axios.post('http://localhost:3001/travelerlogin',data)
-        // .then(res=>{
-        //     if(res.status===200){
-        //         this.setState({
-        //             status:200
-                    
-        //         })
-                
+        // checklogin(e){
+        //     e.preventDefault();
+        //     let data={
+        //         emailaddress:this.state.emailaddress,
+        //         password:this.state.password
+    
         //     }
-            
-        // }).catch(res=>{
-        //     this.setState({
-        //         message:"Incorrect username or password"
+        //     //set the with credentials to true
+        //     axios.defaults.withCredentials = true;
+        //     axios.post('http://localhost:3001/ownerLogin',data)
+        //     .then(res=>{
+        //         if(res.status===200){
+        //             this.setState({
+        //                 status:200
+                        
+        //             })
+                    
+        //         }
+                
+        //     }).catch(res=>{
+        //         this.setState({
+        //             message:"Incorrect username or password"
+        //         })
         //     })
-        // })
-    //}
+        // }
 
-    onSubmit(values) {
-        console.log(values);
-        this.props.traveler_login(values,
-        )
-        
-      }
+        onSubmit(values) {
+            console.log(values);
+            this.props.owner_login(values
+            )
+            
+          }
+     
 
     render() {
         const { handleSubmit } = this.props;
-        console.log("Current status",this.props.status);
-      var redirect=this.props.status==200?<Redirect to='/'/>:null;
-      var message=this.props.status==400?"Incorrect username or passoword":null;
+        var redirect=this.props.status===200?<Redirect to='/'/>:null;
+        var message=this.props.status===400?"Incorrect username or password":null;
         return (
-            <div >
+            <div>
             {redirect}
                 <nav className="navbar navbar-default">
                     <div className="container-fluid">
@@ -87,28 +114,23 @@ class Login extends Component {
                 <br />
                 <br />
                
-                <div>
-                    <h1 className="loginHeader">Log in to HomeAway</h1>
-
-                    <div className="NeedAccnt">
-                        <span>
-                            Need an account? 
-            </span>
-                        <NavLink to="/signup">
-                            Sign Up
-                </NavLink>
-                    </div>
-                </div>
-               
+                
                 <div className="container">
-
+                
+<table>
+<tbody>
+<tr>
+<td id="displayim"><span><img  src={displayimg}></img></span>
+</td>
+<td>
 <div className="login-form">
 <div className="main-div">
     <div className="panel">
-   <label>Account Login</label>
+   <label>Owner Login</label><hr/>
+   
    </div>
     <form id="Login" onSubmit={handleSubmit(this.onSubmit.bind(this))}>
-
+    <h6 id="sign-up-owner"><NavLink to="/ownersignup">Sign Up</NavLink></h6>
     <Field
         name="emailaddress"
         type="email"
@@ -117,17 +139,14 @@ class Login extends Component {
         placeholder="Email address"
         
       />
-
       <Field
-        name="password"
-        type="password"
-        component={this.renderField}
-        id="inputPassword"
-        placeholder="Password"
-        
-      />
-
-        
+      name="password"
+      type="password"
+      component={this.renderField}
+      id="inputPassword"
+      placeholder="Password"
+      
+    />
 
         
         <div className="forgot">
@@ -136,17 +155,17 @@ class Login extends Component {
         <button type="submit" className="btn btn-primary">Log In</button>
         <br/>
         <br/>
-    
+        <hr/>
         <br/>
         <label style={{color:"red"}}>{message}</label>
         <br/>
-        <div className="disclaimer">
-        <label>We don't post anything without your permission</label>
-</div>
+        
     </form>
     </div>
 
-</div></div>
+</div></td></tr></tbody>
+
+</table></div>
 
 
 
@@ -156,10 +175,15 @@ class Login extends Component {
                 );
             }
         }
-        function mapStateToProps(state) {
-            console.log("in map state",state);
-            return { status: state.traveler_login.status};
-          }
+
+        function mapStateToProps(state){
+            return{
+                status: state.owner_login.status
+            };
+        }
+
+        
+
 
         function validate(values) {
 
@@ -178,10 +202,9 @@ class Login extends Component {
             // If errors has *any* properties, redux form assumes form is invalid
             return errors;
           }
-          
         
-        export default reduxForm({
-  validate,
-  form: "NewBookForm"
-})(connect(mapStateToProps, {traveler_login })(Login));
-
+          export default reduxForm({
+            validate,
+            form: "NewOwnerForm"
+          })(connect(mapStateToProps, {owner_login})(OwnerLogin));
+          
